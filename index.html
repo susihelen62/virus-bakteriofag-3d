@@ -1,1 +1,575 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Virus-bakteriofag-3d </title>
+<style>
+  :root{
+    --bg1:#0f1d2e; --bg2:#1d2b4a;
+    --paper:#eef3f6; --ink:#12202b; --muted:#56697a;
+    --accent:#e4572e; --accent-ink:#fff; --ok:#1f9d8a; --line:#cbd7df;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg1)}
+  #stage{position:fixed;inset:0;background:radial-gradient(120% 90% at 50% 20%,var(--bg2),var(--bg1) 70%)}
+  #cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+  #gl{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
 
+  header{position:fixed;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 8px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;pointer-events:none;z-index:5}
+  header h1{margin:0;font:600 20px/1.1 Georgia,"Times New Roman",serif;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+  header p{margin:3px 0 0;font-size:12px;color:#d6e2ee;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+  #camBtn{pointer-events:auto;border:0;border-radius:999px;padding:10px 14px;font:600 13px system-ui;background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer;white-space:nowrap}
+  #camBtn.on{background:#fff;color:var(--ink)}
+
+  #label{position:fixed;z-index:4;pointer-events:none;transform:translate(-50%,-130%);background:#fff;color:var(--ink);font:600 12px system-ui;padding:5px 9px;border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,.3);display:none;white-space:nowrap}
+  #label::after{content:"";position:absolute;left:50%;bottom:-5px;width:10px;height:10px;background:#fff;transform:translateX(-50%) rotate(45deg)}
+
+  #dock{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--paper);border-radius:16px 16px 0 0;padding:6px 10px calc(env(safe-area-inset-bottom,0px) + 8px);box-shadow:0 -6px 24px rgba(0,0,0,.35);max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
+  .tabs{display:flex;gap:4px;align-items:center}
+  .tabs button{border:0;background:transparent;font:600 13px system-ui;color:var(--muted);padding:6px 10px;border-radius:8px;cursor:pointer}
+  .tabs button.on{background:var(--ink);color:#fff}
+  .tabs .sp{flex:1}
+  .pane{display:flex;flex-direction:column;gap:6px}
+  .pane[hidden],#dock.min .pane{display:none}
+  #tools,#chips,#sChips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+  #tools::-webkit-scrollbar,#chips::-webkit-scrollbar,#sChips::-webkit-scrollbar{display:none}
+  .tool{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:6px 10px;font:600 12px system-ui;cursor:pointer}
+  .tool.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .chip{flex:0 0 auto;display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px 4px 7px;font:500 12px system-ui;color:var(--ink);cursor:pointer}
+  #sChips .chip{padding:4px 10px}
+  .chip i{width:10px;height:10px;border-radius:50%;background:var(--c);display:block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+  .chip.off{opacity:.55;border-style:dashed}
+  .chip.sel{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink) inset}
+  #info{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center}
+  #info h2{margin:0;font:600 15px/1.2 Georgia,serif;grid-column:1}
+  #info p{margin:0;font-size:12.5px;line-height:1.4;color:#2b3b48;grid-column:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+  #info p.open{display:block;max-height:22vh;overflow:auto}
+  #iState{display:none}
+  #toggle{grid-column:2;grid-row:1/3;border:0;border-radius:10px;padding:9px 13px;font:700 13px system-ui;background:var(--accent);color:#fff;cursor:pointer}
+  #toggle.attach{background:var(--ok)}
+  #toggle:disabled{background:#b8c4cc;cursor:default}
+  .row{display:flex;gap:6px;align-items:center}
+  #sSlider{flex:1;min-width:70px;accent-color:var(--accent)}
+  #sCap{margin:0;font-size:13px;line-height:1.4;color:#2b3b48;min-height:2.8em}
+  #toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);background:#fff;color:var(--ink);padding:9px 14px;border-radius:10px;font:500 13px system-ui;box-shadow:0 6px 20px rgba(0,0,0,.35);z-index:9;max-width:88vw;display:none}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <video id="cam" playsinline muted autoplay></video>
+  <canvas id="gl"></canvas>
+</div>
+
+<header>
+  <div>
+    <h1>Virus bakteriofag 3d</h1>
+    <p> Susi Helen Christin - 2608646</p>
+  </div>
+  <button id="camBtn" type="button">Nyalakan kamera AR</button>
+</header>
+
+<div id="label"></div>
+<div id="toast" role="status"></div>
+
+<section id="dock" aria-label="Panel kontrol">
+  <div class="tabs">
+    <button class="on" data-tab="parts" type="button">Bongkar pasang</button>
+    <button data-tab="sim" type="button">Infeksi bakteri</button>
+    <span class="sp"></span>
+    <button id="bMin" type="button" aria-label="Ciutkan panel">▾</button>
+  </div>
+  <div class="pane" id="paneParts">
+    <div id="tools">
+      <button class="tool" id="bExplode" type="button">Lepas semua</button>
+      <button class="tool" id="bAssemble" type="button">Pasang semua</button>
+      <button class="tool" id="bMode" type="button">Mode: putar</button>
+      <button class="tool" id="bReset" type="button">Reset posisi</button>
+    </div>
+    <div id="chips" role="list"></div>
+    <div id="info">
+      <h2 id="iName">Pilih bagian virus</h2>
+      <p id="iDesc" title="Ketuk untuk membuka penuh"></p>
+      <div id="iState"></div>
+      <button id="toggle" type="button" disabled>Lepas</button>
+    </div>
+  </div>
+  <div class="pane" id="paneSim" hidden>
+    <div class="row">
+      <button class="tool" id="sPlay" type="button">Jeda</button>
+      <button class="tool" id="sRe" type="button">Ulang</button>
+      <button class="tool" id="sSpd" type="button">1×</button>
+      <input type="range" id="sSlider" min="0" max="340" value="0" aria-label="Linimasa infeksi">
+    </div>
+    <div id="sChips"></div>
+    <p id="sCap"></p>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  if (typeof THREE === 'undefined') {
+    document.getElementById('iDesc').textContent = 'Pustaka three.js gagal dimuat. Pastikan perangkat terhubung ke internet lalu muat ulang.';
+    return;
+  }
+
+  /* ---------- Scene ---------- */
+  const canvas = document.getElementById('gl');
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setClearColor(0x000000, 0);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+  camera.position.set(0, 0.6, 14);
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x334455, 0.85));
+  const key = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(4, 7, 8); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x88bbff, 0.45); rim.position.set(-6, -2, -5); scene.add(rim);
+
+  const phage = new THREE.Group();          // dikontrol pengguna (putar / geser / skala)
+  phage.rotation.order = 'YXZ';
+  scene.add(phage);
+  const model = new THREE.Group();          // pusatkan model
+  model.position.y = -1.05;
+  phage.add(model);
+
+  /* ---------- Helper ---------- */
+  const Y = new THREE.Vector3(0,1,0);
+  function mat(color, opts){
+    return new THREE.MeshStandardMaterial(Object.assign({color, roughness:.45, metalness:.1, emissive:0x000000}, opts||{}));
+  }
+  function limb(a, b, r, m, seg){
+    const d = new THREE.Vector3().subVectors(b, a);
+    const g = new THREE.CylinderGeometry(r, r, d.length(), seg||12);
+    const mesh = new THREE.Mesh(g, m);
+    mesh.position.copy(a).add(b).multiplyScalar(.5);
+    mesh.quaternion.setFromUnitVectors(Y, d.clone().normalize());
+    return mesh;
+  }
+
+  /* ---------- Bagian-bagian virus ---------- */
+  const parts = [];
+  function addPart(id, name, color, dir, desc, build){
+    const group = new THREE.Group();
+    build(group);
+    model.add(group);
+    const p = {id, name, color, group, dir:new THREE.Vector3(...dir), amt:0, target:0, desc, mats:[]};
+    group.traverse(o=>{
+      if (o.isMesh){ o.userData.part = p; p.mats.push(o.material); }
+      else if (o.isLineSegments){ o.raycast = function(){}; }
+    });
+    parts.push(p);
+    return p;
+  }
+
+  // Kepala (kapsid): ikosahedron memanjang, transparan agar DNA terlihat
+  addPart('head','Kepala (kapsid)','#f08a8a',[-1.5,1.6,0.4],
+    'Selubung protein berbentuk segi dua puluh (ikosahedral) yang membungkus dan melindungi materi genetik virus. Dari sinilah DNA (Deoxyribose Nitric Acid)disuntikkan ke dalam bakteri.', Kepala virus berfungsi sebagai tempat menyimpan dan melindungi materi genetik asam nukleat berupa DNA atau RNA'
+    g=>{
+      const geo = new THREE.IcosahedronGeometry(1.3, 0);
+      const m = mat(0xf08a8a, {transparent:true, opacity:.55, roughness:.3, flatShading:true, side:THREE.DoubleSide});
+      const mesh = new THREE.Mesh(geo, m);
+      mesh.scale.set(1, 1.3, 1); mesh.position.y = 3.45;
+      g.add(mesh);
+      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({color:0xffffff, transparent:true, opacity:.8}));
+      edges.scale.copy(mesh.scale); edges.position.copy(mesh.position);
+      g.add(edges);
+    });
+
+  // DNA di dalam kepala
+  addPart('dna','Materi genetik (DNA)','#4cd7f6',[1.9,1.7,0.6],
+    'DNA untai ganda yang membawa seluruh informasi untuk membuat virus baru. Saat fag menempel, DNA ini dimasukkan ke sel bakteri, sedangkan kerangka proteinnya tertinggal di luar.',
+    g=>{
+      const m = mat(0x4cd7f6, {emissive:0x0a4a5c, roughness:.35});
+      const mesh = new THREE.Mesh(new THREE.TorusKnotGeometry(.55, .13, 140, 12, 2, 3), m);
+      mesh.scale.set(1, 1.2, 1); mesh.position.y = 3.45;
+      g.add(mesh);
+    });
+
+  // Kerah
+  addPart('collar','Kerah/leher (collar)','#e8c35a',[1.7,1.0,0],
+    'leher sebagai Cincin protein yang menghubungkan kepala dengan ekor. Bagian ini menjadi tempat sambungan dan ikut menstabilkan struktur virus.',
+    g=>{
+      const mesh = new THREE.Mesh(new THREE.CylinderGeometry(.55, .45, .3, 24), mat(0xe8c35a, {roughness:.35}));
+      mesh.position.y = 1.78; g.add(mesh);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(.5, .05, 8, 24), mat(0xf6dc8a));
+      ring.rotation.x = Math.PI/2; ring.position.y = 1.9; g.add(ring);
+    });
+
+  // Selubung ekor (bercincin, sedikit transparan)
+  addPart('sheath','Selubung ekor (sheath)','#2bb3a3',[-2.1,0,0.2],
+    'Tabung protein yang bisa mengerut (kontraktil). Saat virus menempel, selubung memendek dan mendorong tabung inti menembus dinding bakteri.',
+    g=>{
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(.32, .32, 2.5, 20), mat(0x2bb3a3, {transparent:true, opacity:.85}));
+      body.position.y = .45; g.add(body);
+      const rm = mat(0x1d8c80);
+      for (let i=0;i<12;i++){
+        const r = new THREE.Mesh(new THREE.TorusGeometry(.335, .045, 8, 20), rm);
+        r.rotation.x = Math.PI/2; r.position.y = -.65 + i*.2; g.add(r);
+      }
+    });
+
+  // Tabung inti (di dalam selubung)
+  addPart('core','Tabung inti (core)','#f4f4f4',[0.4,-0.2,2.2],
+    'Pipa sempit di tengah ekor. Setelah selubung mengerut, tabung ini menusuk dinding sel dan menjadi saluran bagi DNA virus untuk masuk ke bakteri.',
+    g=>{
+      const m = mat(0xf4f4f4, {roughness:.3});
+      const t = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, 3.3, 14), m);
+      t.position.y = .1; g.add(t);
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(.12, .3, 14), m);
+      tip.rotation.x = Math.PI; tip.position.y = -1.7; g.add(tip);
+    });
+
+  // Pelat dasar (segi enam)
+  addPart('base','Pelat dasar (baseplate)','#7b61d1',[0,-2.1,0],
+    'Struktur segi enam di ujung ekor. Pelat ini menerima sinyal dari serabut ekor, lalu memicu pengerutan selubung ketika virus sudah menempel dengan tepat.',
+    g=>{
+      const mesh = new THREE.Mesh(new THREE.CylinderGeometry(.75, .75, .3, 6), mat(0x7b61d1, {flatShading:true}));
+      mesh.position.y = -1.0; g.add(mesh);
+    });
+
+  // Duri / pin
+  addPart('pins','Jarum/duri','#e4572e',[0,-3.2,0],
+    'Enam paku kecil di bawah pelat dasar. Duri ini membantu virus mencengkeram permukaan bakteri setelah serabut ekor menemukan sasarannya.',
+    g=>{
+      const m = mat(0xe4572e);
+      for (let i=0;i<6;i++){
+        const a = i*Math.PI/3 + Math.PI/6;
+        const c = new THREE.Mesh(new THREE.ConeGeometry(.1, .55, 10), m);
+        c.rotation.x = Math.PI;
+        c.position.set(Math.cos(a)*.5, -1.45, Math.sin(a)*.5);
+        g.add(c);
+      }
+    });
+
+  // Enam serabut ekor
+  for (let i=0;i<6;i++){
+    const a = i*Math.PI/3;
+    addPart('fiber'+i,'Serabut ekor '+(i+1),'#9bcf53',[2.4,0,0],
+      'Serabut panjang berlutut yang mengenali reseptor khusus pada permukaan bakteri (misalnya Escherichia coli). Serabut inilah yang membuat fag hanya menyerang bakteri tertentu.',
+      g=>{
+        const m = mat(0x9bcf53, {roughness:.5});
+        const p0 = new THREE.Vector3(.65,-.95,0), knee = new THREE.Vector3(2.0,-.25,0), foot = new THREE.Vector3(1.65,-2.4,0);
+        g.add(limb(p0, knee, .07, m, 8));
+        g.add(limb(knee, foot, .055, m, 8));
+        const k = new THREE.Mesh(new THREE.SphereGeometry(.12, 12, 10), m); k.position.copy(knee); g.add(k);
+        const f = new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), mat(0xd6ee9c)); f.position.copy(foot); g.add(f);
+        g.rotation.y = -a;
+      });
+  }
+  // Arah lepas serabut: radial menurut sudutnya (posisi grup berada di ruang model)
+  parts.filter(p=>p.id.startsWith('fiber')).forEach((p,i)=>{
+    const a = i*Math.PI/3;
+    p.dir.set(Math.cos(a)*2.2, -.3, Math.sin(a)*2.2);
+  });
+
+  /* ---------- UI ---------- */
+  const $ = id => document.getElementById(id);
+  const chipsEl = $('chips');
+  let selected = null;
+
+  parts.forEach(p=>{
+    const b = document.createElement('button');
+    b.className = 'chip'; b.type = 'button'; b.setAttribute('role','listitem');
+    b.style.setProperty('--c', p.color);
+    b.innerHTML = '<i></i><span>'+p.name+'</span>';
+    b.addEventListener('click', ()=>select(p));
+    chipsEl.appendChild(b);
+    p.chip = b;
+  });
+
+  function refreshUI(){
+    parts.forEach(p=>{
+      p.chip.classList.toggle('off', p.target === 1);
+      p.chip.classList.toggle('sel', p === selected);
+    });
+    const btn = $('toggle');
+    if (!selected){
+      btn.disabled = true; btn.textContent = 'Lepas'; btn.classList.remove('attach');
+      $('iName').textContent = 'Pilih satu bagian';
+      $('iDesc').textContent = 'Ketuk bagian pada model 3D atau pilih dari daftar di atas untuk melihat fungsinya.';
+      $('iState').textContent = '';
+      return;
+    }
+    $('iName').textContent = selected.name;
+    $('iDesc').textContent = selected.desc;
+    const off = selected.target === 1;
+    btn.disabled = false;
+    btn.textContent = off ? 'Pasang kembali' : 'Lepas bagian ini';
+    btn.classList.toggle('attach', off);
+    const n = parts.filter(p=>p.target===1).length;
+    $('iState').textContent = (off ? 'Terlepas' : 'Terpasang') + ' · ' + n + ' dari ' + parts.length + ' bagian terlepas';
+  }
+
+  function select(p){
+    if (selected) selected.mats.forEach(m=>m.emissive && m.emissive.copy(m.userData.baseEmissive || new THREE.Color(0x000000)));
+    selected = p;
+    if (p){
+      p.mats.forEach(m=>{
+        if (!m.userData.baseEmissive) m.userData.baseEmissive = m.emissive.clone();
+        m.emissive.setHex(0x5a5a1a);
+      });
+      const l = $('label'); l.textContent = p.name; l.style.display = 'block';
+    } else {
+      $('label').style.display = 'none';
+    }
+    refreshUI();
+  }
+
+  $('toggle').addEventListener('click', ()=>{
+    if (!selected) return;
+    selected.target = selected.target ? 0 : 1;
+    refreshUI();
+  });
+  $('bExplode').addEventListener('click', ()=>{ parts.forEach(p=>p.target=1); refreshUI(); });
+  $('bAssemble').addEventListener('click', ()=>{ parts.forEach(p=>p.target=0); refreshUI(); });
+
+  let mode = 'rotate';
+  $('bMode').addEventListener('click', e=>{
+    mode = mode === 'rotate' ? 'move' : 'rotate';
+    e.currentTarget.textContent = 'Mode: ' + (mode === 'rotate' ? 'putar' : 'geser');
+    e.currentTarget.classList.toggle('active', mode === 'move');
+  });
+
+  let userScale = 1, baseScale = 1;
+  function resetView(){
+    phage.rotation.set(0.12, 0.5, 0);
+    phage.position.set(0, 0.9, 0);
+    userScale = 1;
+  }
+  $('bReset').addEventListener('click', resetView);
+  resetView();
+
+  function toast(msg){
+    const t = $('toast'); t.textContent = msg; t.style.display = 'block';
+    clearTimeout(toast.h); toast.h = setTimeout(()=>t.style.display='none', 4200);
+  }
+
+  /* ---------- Kamera AR ---------- */
+  const video = $('cam'), camBtn = $('camBtn');
+  let stream = null;
+  camBtn.addEventListener('click', async ()=>{
+    if (stream){
+      stream.getTracks().forEach(t=>t.stop()); stream = null;
+      video.style.display = 'none'; video.srcObject = null;
+      camBtn.textContent = 'Nyalakan kamera AR'; camBtn.classList.remove('on');
+      return;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      toast('Kamera tidak tersedia. Buka lewat HTTPS atau localhost.'); return;
+    }
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false});
+      video.srcObject = stream; video.style.display = 'block';
+      await video.play().catch(()=>{});
+      camBtn.textContent = 'Matikan kamera'; camBtn.classList.add('on');
+      toast('Arahkan ke meja. Seret untuk memutar, cubit untuk memperbesar, atau pakai mode geser.');
+    } catch (err){
+      stream = null;
+      toast('Izin kamera ditolak atau kamera tidak ditemukan. Izinkan akses kamera di pengaturan peramban.');
+    }
+  });
+
+  /* ---------- Interaksi sentuh / mouse ---------- */
+  const ptrs = new Map();
+  let down = null, pinch = 0;
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+
+  function pick(x, y){
+    if (tab === 'sim') return;
+    ndc.set((x/innerWidth)*2-1, -(y/innerHeight)*2+1);
+    ray.setFromCamera(ndc, camera);
+    const meshes = [];
+    parts.forEach(p=>p.group.traverse(o=>{ if (o.isMesh) meshes.push(o); }));
+    const hit = ray.intersectObjects(meshes, false)[0];
+    if (hit) select(hit.object.userData.part);
+    else select(null);
+  }
+  const dist = () => { const a=[...ptrs.values()]; return Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y); };
+
+  canvas.addEventListener('pointerdown', e=>{
+    canvas.setPointerCapture(e.pointerId);
+    ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    down = {t:performance.now(), moved:0};
+    if (ptrs.size === 2) pinch = dist();
+  });
+  canvas.addEventListener('pointermove', e=>{
+    const p = ptrs.get(e.pointerId); if (!p) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y;
+    p.x = e.clientX; p.y = e.clientY;
+    if (down) down.moved += Math.abs(dx) + Math.abs(dy);
+    if (ptrs.size === 1){
+      if (mode === 'rotate'){
+        phage.rotation.y += dx * 0.01;
+        phage.rotation.x = Math.max(-1.2, Math.min(1.2, phage.rotation.x + dy * 0.01));
+      } else {
+        const k = (2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov/2))) / innerHeight;
+        phage.position.x += dx * k; phage.position.y -= dy * k;
+      }
+    } else if (ptrs.size === 2){
+      const d = dist();
+      if (pinch > 0) userScale = Math.max(.4, Math.min(2.6, userScale * d / pinch));
+      pinch = d;
+    }
+  });
+  function endPtr(e){
+    if (!ptrs.has(e.pointerId)) return;
+    const wasSingle = ptrs.size === 1;
+    ptrs.delete(e.pointerId);
+    if (wasSingle && down && down.moved < 8 && performance.now() - down.t < 450) pick(e.clientX, e.clientY);
+    if (ptrs.size < 2) pinch = 0;
+  }
+  canvas.addEventListener('pointerup', endPtr);
+  canvas.addEventListener('pointercancel', endPtr);
+  canvas.addEventListener('wheel', e=>{
+    e.preventDefault();
+    userScale = Math.max(.4, Math.min(2.6, userScale * (e.deltaY < 0 ? 1.07 : 0.93)));
+  }, {passive:false});
+
+  /* ---------- Simulasi infeksi ---------- */
+  let tab='parts', simT=0, playing=true, speed=1, dragS=false, lastDH=0, si=-1;
+  const T=34, dock=$('dock'), slider=$('sSlider'), sChips=$('sChips');
+  const STAGES=[
+    ['Mendekat',0,'Fag terbawa arus dan bertemu bakteri secara kebetulan. Fag tidak bisa berenang sendiri.'],
+    ['Menempel',5,'Serabut ekor mengenali reseptor khusus pada dinding bakteri, lalu pelat dasar merapat ke permukaan.'],
+    ['Penetrasi',9,'Selubung ekor mengerut dan mendorong tabung inti menembus dinding sel.'],
+    ['DNA masuk',13,'DNA fag mengalir lewat tabung inti ke dalam bakteri. Kapsid kosong tertinggal di luar.'],
+    ['Perbanyakan',17,'DNA bakteri dirusak. Mesin sel dipakai untuk menyalin DNA fag, membuat kepala dan ekor, lalu merakitnya menjadi fag baru.'],
+    ['Lisis',26,'Enzim lisozim melubangi dinding sel hingga bakteri pecah. Fag baru keluar untuk menginfeksi bakteri lain.']
+  ];
+  const cl=x=>Math.min(1,Math.max(0,x)), seg=(t,a,b)=>cl((t-a)/(b-a)), E=x=>x*x*(3-2*x);
+  const P=id=>parts.find(p=>p.id===id);
+  const pHead=P('head'),pDna=P('dna'),pCol=P('collar'),pSh=P('sheath'),pCore=P('core');
+  const fibers=parts.filter(p=>p.id.startsWith('fiber'));
+  const dnaM=pDna.group.children[0];
+
+  const sim=new THREE.Group(); sim.visible=false; phage.add(sim);
+  const cell=new THREE.Group(); cell.position.y=-1.9; sim.add(cell);
+  const minisG=new THREE.Group(); minisG.position.y=-1.9; sim.add(minisG);
+  const R=2.2, L=3.6, pts=[];
+  for(let i=0;i<=12;i++){const a=-Math.PI/2+i/12*Math.PI/2; pts.push(new THREE.Vector2(R*Math.cos(a),-L/2+R*Math.sin(a)));}
+  for(let i=0;i<=12;i++){const a=i/12*Math.PI/2; pts.push(new THREE.Vector2(R*Math.cos(a),L/2+R*Math.sin(a)));}
+  const c0=new THREE.Color(0x58a6d6), c1=new THREE.Color(0xe4572e);
+  const wallMat=mat(0x58a6d6,{transparent:true,opacity:.3,side:THREE.DoubleSide,depthWrite:false,roughness:.2});
+  const wall=new THREE.Mesh(new THREE.LatheGeometry(pts,48),wallMat); wall.rotation.z=Math.PI/2; cell.add(wall);
+
+  class Coil extends THREE.Curve{ constructor(f){super(); this.f=f;} getPoint(t,o){return (o||new THREE.Vector3()).copy(this.f(t));} }
+  const chrom=new THREE.Mesh(new THREE.TubeGeometry(new Coil(t=>{const a=t*Math.PI*2; return new THREE.Vector3(2.4*Math.cos(a),Math.sin(a*3),Math.sin(a*2+.7));}),300,.07,6,true),mat(0xffb347,{transparent:true}));
+  cell.add(chrom);
+  const injM=new THREE.Mesh(new THREE.TubeGeometry(new Coil(u=>{const th=u*Math.PI*6.4,r=.25+.8*u; return new THREE.Vector3(r*Math.cos(th)*1.3,1.9-1.6*u+.25*Math.sin(th*1.3),r*Math.sin(th));}),200,.07,6,false),mat(0x4cd7f6,{emissive:0x0a4a5c,transparent:true}));
+  cell.add(injM); const injN=injM.geometry.index.count;
+
+  const minis=[], V=THREE.Vector3;
+  [[-2.6,.1,.3],[-.8,.1,-.4],[1.2,.1,.4],[2.9,0,-.2],[-1.6,-1,-.3],[.5,-1,.3]].forEach((q,i)=>{
+    const g=new THREE.Group();
+    const head=new THREE.Mesh(new THREE.IcosahedronGeometry(.3,0),mat(0xf08a8a,{transparent:true,opacity:.6,flatShading:true})); head.position.y=.85;
+    const dna=new THREE.Mesh(new THREE.TorusKnotGeometry(.13,.035,48,8,2,3),mat(0x4cd7f6,{emissive:0x0a4a5c})); dna.position.y=.85;
+    const tail=new THREE.Group();
+    tail.add(limb(new V(0,.6,0),new V(0,-.15,0),.07,mat(0x2bb3a3)));
+    const bs=new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,.06,6),mat(0x7b61d1)); bs.position.y=-.18; tail.add(bs);
+    for(let k=0;k<3;k++){const lg=new THREE.Group(); lg.add(limb(new V(.1,-.18,0),new V(.4,-.6,0),.03,mat(0x9bcf53))); lg.rotation.y=k*2.09; tail.add(lg);}
+    g.add(head,dna,tail); g.scale.setScalar(.7); g.position.set(...q); g.rotation.z=i%2?.15:-.15;
+    minisG.add(g); minis.push({g,head,dna,tail,q:new V(...q)});
+  });
+
+  function applySim(t){
+    const ap=E(seg(t,0,5)), la=E(seg(t,5,9)), co=E(seg(t,9,13)), inj=E(seg(t,13.5,17)), b=E(seg(t,30,31.8));
+    const j=(1-ap)*.15*Math.sin(t*2.3);
+    model.position.set(4.2*(1-ap)+j, 5.2*(1-ap)+1.9*ap-.5*la-3*b, 1.2*(1-ap));
+    model.rotation.set(0,1.2*(1-ap),.7*(1-ap)); model.scale.setScalar(.55);
+    const s=1-.55*co, sh=2.55*(1-s);
+    [pHead,pDna,pCol,pCore].forEach(p=>p.simY=-sh);
+    pSh.simS=s; pSh.simY=-.85*(1-s);
+    const fs=1-.28*la; fibers.forEach(f=>{f.simS=fs; f.simY=-.95*(1-fs);});
+    const d=1-.85*E(seg(t,13,17)); dnaM.scale.set(d,1.2*d,d);
+    injM.geometry.setDrawRange(0,Math.floor(inj*injN/6)*6); injM.material.opacity=1-seg(t,19,22);
+    const k=E(seg(t,17,19.5)); chrom.scale.setScalar(1-.5*k); chrom.material.opacity=1-k; chrom.visible=k<1;
+    const lk=seg(t,26,30), w=1+.08*lk+.02*lk*Math.sin(t*25), r=E(seg(t,30.2,34));
+    wallMat.color.copy(c0).lerp(c1,lk); wallMat.opacity=.3*(1-b);
+    cell.scale.setScalar(w*(1+.25*b)); cell.visible=b<1;
+    minis.forEach((m,i)=>{
+      const dn=E(seg(t,17.5+.4*i,19.5+.4*i)), hd=E(seg(t,20+.3*i,22+.3*i)), tl=E(seg(t,23+.3*i,25+.3*i));
+      m.dna.visible=dn>0; m.dna.scale.set(dn,1.2*dn,dn);
+      m.head.visible=hd>0; m.head.scale.set(hd,1.3*hd,hd);
+      m.tail.visible=tl>0; m.tail.scale.setScalar(tl||.001);
+      m.g.position.copy(m.q).multiplyScalar(1+1.8*r); m.g.rotation.y=t*1.5*r;
+    });
+  }
+  function clearSim(){
+    parts.forEach(p=>{p.simY=0; p.simS=1;});
+    model.position.set(0,-1.05,0); model.rotation.set(0,0,0); model.scale.setScalar(1); dnaM.scale.set(1,1.2,1);
+  }
+  STAGES.forEach((st,i)=>{
+    const b=document.createElement('button'); b.className='chip'; b.type='button'; b.textContent=(i+1)+'. '+st[0];
+    b.addEventListener('click',()=>{simT=st[1]; si=-1;}); sChips.appendChild(b);
+  });
+  function updateSimUI(){
+    let k=0; STAGES.forEach((st,i)=>{ if(simT>=st[1]) k=i; });
+    if(k!==si){ si=k; [...sChips.children].forEach((c,i)=>c.classList.toggle('sel',i===k)); $('sCap').textContent=STAGES[k][2]; }
+    if(!dragS) slider.value=simT*10;
+    $('sPlay').textContent = playing ? 'Jeda' : (simT>=T ? 'Ulangi' : 'Putar');
+  }
+  function setTab(n){
+    tab=n;
+    document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===n));
+    $('paneParts').hidden=n!=='parts'; $('paneSim').hidden=n!=='sim';
+    parts.forEach(p=>{p.target=0; p.amt=0;}); select(null);
+    sim.visible=n==='sim'; si=-1; resetView();
+    if(n==='sim'){ simT=0; playing=true; phage.position.y=.3; } else clearSim();
+  }
+  document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
+  $('bMin').addEventListener('click',e=>{ dock.classList.toggle('min'); e.currentTarget.textContent=dock.classList.contains('min')?'▴':'▾'; });
+  $('iDesc').addEventListener('click',e=>e.currentTarget.classList.toggle('open'));
+  $('sPlay').addEventListener('click',()=>{ if(simT>=T){simT=0; playing=true;} else playing=!playing; });
+  $('sRe').addEventListener('click',()=>{ simT=0; playing=true; });
+  $('sSpd').addEventListener('click',e=>{ speed=speed===1?2:speed===2?.5:1; e.currentTarget.textContent=speed+'×'; });
+  slider.addEventListener('pointerdown',()=>dragS=true);
+  ['pointerup','pointercancel','change'].forEach(ev=>slider.addEventListener(ev,()=>dragS=false));
+  slider.addEventListener('input',()=>{ simT=slider.value/10; });
+  function fitView(){ camera.setViewOffset(innerWidth,innerHeight,0,(lastDH-56)/2,innerWidth,innerHeight); }
+
+  /* ---------- Render ---------- */
+  function resize(){
+    const w = innerWidth, h = innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; fitView();
+    baseScale = Math.max(.6, Math.min(1.15, camera.aspect * 1.35));
+  }
+  addEventListener('resize', resize); resize();
+
+  const clock = new THREE.Clock();
+  const box = new THREE.Box3(), c = new THREE.Vector3();
+  const labelEl = $('label');
+
+  function frame(){
+    const dt = Math.min(clock.getDelta(), .05);
+    if (tab === 'sim'){
+      if (playing && !dragS){ simT = Math.min(T, simT + dt * speed); if (simT >= T) playing = false; }
+      applySim(simT); updateSimUI();
+    }
+    const dh = dock.offsetHeight; if (dh !== lastDH){ lastDH = dh; fitView(); }
+    parts.forEach(p=>{
+      p.amt += (p.target - p.amt) * Math.min(1, dt * 6);
+      p.group.position.copy(p.dir).multiplyScalar(p.amt);
+      p.group.position.y += p.simY || 0; p.group.scale.y = p.simS || 1;
+    });
+    const s = baseScale * userScale * (tab === 'sim' ? .8 : 1);
+    phage.scale.setScalar(s);
+
+    if (selected){
+      box.setFromObject(selected.group); box.getCenter(c);
+      c.project(camera);
+      labelEl.style.left = ((c.x * .5 + .5) * innerWidth) + 'px';
+      labelEl.style.top = ((-c.y * .5 + .5) * innerHeight) + 'px';
+    }
+    renderer.render(scene, camera);
+    requestAnimationFrame(frame);
+  }
+  refreshUI();
+  frame();
+})();
+</script>
+</body>
+</html>
