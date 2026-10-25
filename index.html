@@ -1,9 +1,13 @@
-,<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>model 3d virus </title>
+<title>Media Pembelajaran Virus 3D – Bongkar Pasang</title>
+<meta name="description" content="Model 3D virus (bakteriofag, heliks, ikosahedral, berselubung) yang bagian-bagiannya bisa dilepas-pasang, lengkap dengan simulasi bakteriofag menginfeksi bakteri.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Virus 3D – Bongkar Pasang dan Simulasi Infeksi">
+<meta property="og:description" content="Pelajari bentuk dan bagian-bagian virus dalam 3D.">
 <style>
   :root{
     --bg1:#0f1d2e; --bg2:#1d2b4a;
@@ -20,6 +24,9 @@
   header h1{margin:0;font:600 20px/1.1 Georgia,"Times New Roman",serif;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.5)}
   header p{margin:3px 0 0;font-size:12px;color:#d6e2ee;text-shadow:0 1px 6px rgba(0,0,0,.6)}
   #camBtn{pointer-events:auto;border:0;border-radius:999px;padding:10px 14px;font:600 13px system-ui;background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer;white-space:nowrap}
+  .hbtns{display:flex;gap:6px;align-items:center;pointer-events:auto}
+  #openBtn{border-radius:999px;padding:10px 14px;font:600 13px system-ui;background:#fff;color:var(--ink);text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35);white-space:nowrap}
+  #openBtn[hidden]{display:none}
   #camBtn.on{background:#fff;color:var(--ink)}
 
   #label{position:fixed;z-index:4;pointer-events:none;transform:translate(-50%,-130%);background:#fff;color:var(--ink);font:600 12px system-ui;padding:5px 9px;border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,.3);display:none;white-space:nowrap}
@@ -31,9 +38,9 @@
   .tabs button.on{background:var(--ink);color:#fff}
   .tabs .sp{flex:1}
   .pane{display:flex;flex-direction:column;gap:6px}
-  .pane[hidden],#dock.min .pane{display:none}
-  #tools,#chips,#sChips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
-  #tools::-webkit-scrollbar,#chips::-webkit-scrollbar,#sChips::-webkit-scrollbar{display:none}
+  .pane[hidden],#dock.min .pane,#dock.min #vsel{display:none}
+  #tools,#chips,#sChips,#vsel{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+  #tools::-webkit-scrollbar,#chips::-webkit-scrollbar,#sChips::-webkit-scrollbar,#vsel::-webkit-scrollbar{display:none}
   .tool{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:6px 10px;font:600 12px system-ui;cursor:pointer}
   .tool.active{background:var(--ink);color:#fff;border-color:var(--ink)}
   .chip{flex:0 0 auto;display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px 4px 7px;font:500 12px system-ui;color:var(--ink);cursor:pointer}
@@ -53,7 +60,48 @@
   #sSlider{flex:1;min-width:70px;accent-color:var(--accent)}
   #sCap{margin:0;font-size:13px;line-height:1.4;color:#2b3b48;min-height:2.8em}
   #toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);background:#fff;color:var(--ink);padding:9px 14px;border-radius:10px;font:500 13px system-ui;box-shadow:0 6px 20px rgba(0,0,0,.35);z-index:9;max-width:88vw;display:none}
+  #cyc{position:fixed;inset:0;z-index:3;padding:calc(env(safe-area-inset-top,0px) + 58px) 8px 6px;background:radial-gradient(120% 90% at 50% 20%,var(--bg2),var(--bg1) 70%);display:flex;align-items:center;justify-content:center;overflow:auto}
+  #cyc[hidden]{display:none}
+  #cyc svg{width:100%;height:100%;max-width:560px;max-height:100%;font-family:system-ui,sans-serif}
+  .cmp{width:100%;max-width:520px}
+  .cmp table{border-collapse:collapse;width:100%;background:#fff;border-radius:12px;overflow:hidden;font-size:13px}
+  .cmp th,.cmp td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left}
+  .cmp th{background:var(--ink);color:#fff}
+  .cmp td:first-child{font-weight:700}
+  #cCap{margin:0;font-size:13px;line-height:1.4;color:#2b3b48;min-height:2.8em}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* ===== Footer minimalis ===== */
+  #dock{background:rgba(247,250,252,.97);border-radius:20px 20px 0 0;padding:18px 14px calc(env(safe-area-inset-bottom,0px) + 10px);gap:8px;max-width:560px;box-shadow:0 -4px 28px rgba(0,0,0,.22)}
+  #bMin{position:absolute;top:0;left:50%;transform:translateX(-50%);width:64px;height:20px;border:0;background:none;font-size:0;cursor:pointer;padding:0}
+  #bMin::before{content:"";position:absolute;left:50%;top:8px;width:34px;height:4px;border-radius:2px;background:#b4c1cb;transform:translateX(-50%)}
+  .tabs{gap:14px;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  #dock .tabs button[data-tab]{padding:3px 0;border-radius:0;background:none;color:var(--muted);border-bottom:2px solid transparent;font-size:12.5px;white-space:nowrap;flex:0 0 auto}
+  #dock .tabs button[data-tab].on{background:none;color:var(--ink);border-bottom-color:var(--accent)}
+  #dock .tool{border:0;background:rgba(18,32,43,.06);color:var(--ink);border-radius:8px;padding:6px 10px}
+  #dock .tool.active{background:var(--ink);color:#fff}
+  #vsel{background:rgba(18,32,43,.06);border-radius:999px;padding:3px;align-self:flex-start;max-width:100%;gap:2px}
+  #dock #vsel .tool{background:transparent;border-radius:999px;padding:5px 12px}
+  #dock #vsel .tool.active{background:var(--ink);color:#fff}
+  #tools{gap:4px}
+  .chip{border:0;background:rgba(18,32,43,.05);padding:4px 10px 4px 8px}
+  .chip.sel{background:#fff;box-shadow:0 0 0 1.5px var(--ink)}
+  .chip.off{opacity:.5;border:0}
+  .chip.off i{background:transparent;box-shadow:inset 0 0 0 1.5px var(--c)}
+  #info h2{font-size:14px}
+  #info p{font-size:12px;color:var(--muted)}
+  #toggle{border-radius:999px;padding:8px 14px;font-size:12.5px}
+  #sCap,#cCap{font-size:12.5px;color:var(--muted)}
+  /* ===== Header lebih ringkas ===== */
+  header h1{font-size:16px;text-shadow:0 1px 6px rgba(0,0,0,.45)}
+  header p{font-size:11px;opacity:.8}
+  header>div:first-child{transition:opacity .2s}
+  body.drag header>div:first-child{opacity:.2}
+  @media (max-height:700px),(orientation:landscape){header p{display:none}}
+  #cRow{overflow-x:auto;scrollbar-width:none}
+  #cRow::-webkit-scrollbar{display:none}
+  .tool{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -64,19 +112,24 @@
 
 <header>
   <div>
-    <h1>model 3d virus bakteriofag</h1>
-    <p>Susi Helen Christin - 2608646</p>
+    <h1 id="vTitle">Bakteriofag T4</h1>
+    <p>Ketuk bagian virus, lalu lepas atau pasang</p>
   </div>
-  <button id="camBtn" type="button">Nyalakan kamera AR</button>
+  <div class="hbtns"><a id="openBtn" href="#" target="_blank" rel="noopener" hidden>Buka layar penuh</a><button id="camBtn" type="button">Nyalakan kamera AR</button></div>
 </header>
 
 <div id="label"></div>
 <div id="toast" role="status"></div>
 
+<div id="cyc" hidden></div>
+
 <section id="dock" aria-label="Panel kontrol">
+  <div id="vsel"></div>
   <div class="tabs">
     <button class="on" data-tab="parts" type="button">Bongkar pasang</button>
-    <button data-tab="sim" type="button">Infeksi bakteri</button>
+    <button data-tab="sim" type="button">Infeksi bakteri (litik)</button>
+    <button data-tab="lsim" type="button">Simulasi lisogenik</button>
+    <button data-tab="cyc" type="button">Litik &amp; lisogenik</button>
     <span class="sp"></span>
     <button id="bMin" type="button" aria-label="Ciutkan panel">▾</button>
   </div>
@@ -89,11 +142,19 @@
     </div>
     <div id="chips" role="list"></div>
     <div id="info">
-      <h2 id="iName">Pilih bagian tubuh virus</h2>
+      <h2 id="iName">Pilih satu bagian</h2>
       <p id="iDesc" title="Ketuk untuk membuka penuh"></p>
       <div id="iState"></div>
       <button id="toggle" type="button" disabled>Lepas</button>
     </div>
+  </div>
+  <div class="pane" id="paneCyc" hidden>
+    <div class="row" id="cRow">
+      <button class="tool active" data-m="litik" type="button">Siklus litik</button>
+      <button class="tool" data-m="lis" type="button">Siklus lisogenik</button>
+      <button class="tool" data-m="cmp" type="button">Perbandingan</button>
+    </div>
+    <p id="cCap"></p>
   </div>
   <div class="pane" id="paneSim" hidden>
     <div class="row">
@@ -118,8 +179,11 @@
   /* ---------- Scene ---------- */
   const canvas = document.getElementById('gl');
   const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
   renderer.setClearColor(0x000000, 0);
+  // Render hanya saat ada perubahan: inv() membangunkan loop, loop berhenti sendiri saat diam
+  let running = false, needResize = false, lastT = 0, lastLX = -1, lastLY = -1;
+  function inv(){ if (!running){ running = true; lastT = performance.now(); requestAnimationFrame(frame); } }
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
   camera.position.set(0, 0.6, 14);
@@ -131,7 +195,7 @@
   const phage = new THREE.Group();          // dikontrol pengguna (putar / geser / skala)
   phage.rotation.order = 'YXZ';
   scene.add(phage);
-  const model = new THREE.Group();          // pusatkan model
+  const model = new THREE.Group();          // pusatkan model bakteriofag
   model.position.y = -1.05;
   phage.add(model);
 
@@ -151,22 +215,50 @@
 
   /* ---------- Bagian-bagian virus ---------- */
   const parts = [];
+  let curModel = model, curParts = parts;
+  function mergeKids(g){
+    const by = new Map();
+    g.children.slice().forEach(o=>{
+      if (o.isMesh && o.children.length === 0){
+        if (!by.has(o.material)) by.set(o.material, []);
+        by.get(o.material).push(o);
+      }
+    });
+    by.forEach((list, m)=>{
+      if (list.length < 3) return;
+      let n = 0;
+      const gs = list.map(o=>{
+        o.updateMatrix();
+        let q = o.geometry.clone().applyMatrix4(o.matrix);
+        if (q.index) q = q.toNonIndexed();
+        n += q.attributes.position.count; return q;
+      });
+      const pos = new Float32Array(n*3), nor = new Float32Array(n*3); let k = 0;
+      gs.forEach(q=>{ pos.set(q.attributes.position.array, k*3); nor.set(q.attributes.normal.array, k*3); k += q.attributes.position.count; });
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+      geo.setAttribute('normal', new THREE.BufferAttribute(nor,3));
+      list.forEach(o=>g.remove(o));
+      g.add(new THREE.Mesh(geo, m));
+    });
+  }
   function addPart(id, name, color, dir, desc, build){
     const group = new THREE.Group();
-    build(group);
-    model.add(group);
+    build(group); mergeKids(group);
+    curModel.add(group);
     const p = {id, name, color, group, dir:new THREE.Vector3(...dir), amt:0, target:0, desc, mats:[]};
     group.traverse(o=>{
-      if (o.isMesh){ o.userData.part = p; p.mats.push(o.material); }
+      if (o.isMesh){ o.userData.part = p; if (!p.mats.includes(o.material)) p.mats.push(o.material); }
       else if (o.isLineSegments){ o.raycast = function(){}; }
+      if (o !== group){ o.updateMatrix(); o.matrixAutoUpdate = false; }
     });
-    parts.push(p);
+    curParts.push(p);
     return p;
   }
 
   // Kepala (kapsid): ikosahedron memanjang, transparan agar DNA terlihat
   addPart('head','Kepala (kapsid)','#f08a8a',[-1.5,1.6,0.4],
-    'Selubung protein berbentuk segi dua puluh (ikosahedral) yang membungkus dan melindungi materi genetik virus. Dari sinilah DNA disuntikkan ke dalam bakteri. kepala virus berfungsi sebagai tempat menyimpan dan melindungi materi genetik asam nukleat berupa DNA dan RNA',
+    'Selubung protein berbentuk segi dua puluh (ikosahedral) yang membungkus dan melindungi materi genetik virus. Dari sinilah DNA disuntikkan ke dalam bakteri.',
     g=>{
       const geo = new THREE.IcosahedronGeometry(1.3, 0);
       const m = mat(0xf08a8a, {transparent:true, opacity:.55, roughness:.3, flatShading:true, side:THREE.DoubleSide});
@@ -265,20 +357,99 @@
     p.dir.set(Math.cos(a)*2.2, -.3, Math.sin(a)*2.2);
   });
 
+  /* ---------- Virus lain ---------- */
+  const V3 = THREE.Vector3;
+  const VIR = {phage:{tab:'Bakteriofag', name:'Bakteriofag T4', sub:'Ketuk bagian virus, lalu lepas atau pasang', parts:parts.slice(), model}};
+  function newVirus(k, tab, name, sub){
+    const g = new THREE.Group(); g.visible = false; phage.add(g);
+    curModel = g; curParts = []; VIR[k] = {tab, name, sub, parts:curParts, model:g};
+  }
+  function fib(n, off){ const o=[]; for(let i=0;i<n;i++){ const y=1-2*(i+.5+(off||0))/n, r=Math.sqrt(1-y*y), t=i*2.39996; o.push(new V3(Math.cos(t)*r,y,Math.sin(t)*r)); } return o; }
+  function Cv(f){ const c=new THREE.Curve(); c.getPoint=(t,o)=>(o||new V3()).copy(f(t)); return c; }
+
+  /* 1) HELIKS: Virus Mosaik Tembakau */
+  newVirus('hel','Heliks','Virus Mosaik Tembakau (TMV)','Virus heliks: subunit protein berpilin mengelilingi RNA');
+  const HN = 330, hb = new THREE.BoxGeometry(.32,.36,.2);
+  [['Kapsid heliks (atas)','#58a6d6',0x58a6d6,[0,2.6,0]],
+   ['Kapsid heliks (tengah)','#5fbf9f',0x5fbf9f,[3.4,0,0]],
+   ['Kapsid heliks (bawah)','#8d7be0',0x8d7be0,[0,-2.6,0]]].forEach((s,k)=>{
+    addPart('hc'+k, s[0], s[1], s[3],
+      'Ratusan subunit protein selubung (kapsomer) tersusun berpilin membentuk tabung berongga. Pada virus heliks, bentuk kapsid mengikuti lilitan genomnya, jadi virus tampak seperti batang.',
+      g=>{ const m=mat(s[2],{flatShading:true});
+        for(let i=k*HN/3;i<(k+1)*HN/3;i++){ const a=i*Math.PI/8, c=new THREE.Mesh(hb,m);
+          c.position.set(.95*Math.cos(a),-3+6*i/HN,.95*Math.sin(a)); c.rotation.y=-a; g.add(c); } });
+  });
+  addPart('hrna','RNA genom','#ffb347',[-3.6,0,0],
+    'Satu untai RNA yang membawa gen virus. RNA terselip di alur dalam kapsid heliks sehingga terlindungi. Virus ini menyerang tanaman tembakau dan membuat daunnya berbercak (mosaik).',
+    g=>g.add(new THREE.Mesh(new THREE.TubeGeometry(Cv(u=>new V3(.55*Math.cos(u*125.7),-2.9+5.8*u,.55*Math.sin(u*125.7))),700,.06,6,false),mat(0xffb347,{emissive:0x4a2a00}))));
+
+  /* 2) IKOSAHEDRAL: Adenovirus */
+  newVirus('ico','Ikosahedral','Adenovirus','Virus ikosahedral: kapsid segi dua puluh tanpa selubung');
+  const ig = new THREE.IcosahedronGeometry(1.9,0), ip = ig.attributes.position, iv = {}, fc = [];
+  for(let i=0;i<ip.count;i++){
+    const v = new V3().fromBufferAttribute(ip,i);
+    iv[v.x.toFixed(3)+'|'+v.y.toFixed(3)+'|'+v.z.toFixed(3)] = v;
+    if(i%3===2) fc.push(new V3().fromBufferAttribute(ip,i-2).add(new V3().fromBufferAttribute(ip,i-1)).add(v).divideScalar(3));
+  }
+  const iVerts = Object.values(iv);
+  addPart('icap','Kapsid (segi dua puluh)','#f08a8a',[-3,2.6,0],
+    'Cangkang protein dengan 20 sisi segitiga dan 12 sudut. Bentuk ikosahedral adalah cara hemat untuk membangun cangkang dari banyak subunit identik.',
+    g=>{ const m=mat(0xf08a8a,{transparent:true,opacity:.5,roughness:.3,flatShading:true,side:THREE.DoubleSide});
+      g.add(new THREE.Mesh(ig,m));
+      g.add(new THREE.LineSegments(new THREE.EdgesGeometry(ig),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.8}))); });
+  addPart('ihex','Heksón','#e8c35a',[0,0,0],
+    'Kapsomer berbentuk segi enam yang menutupi sisi-sisi kapsid. Adenovirus punya 240 heksón.',
+    g=>{ const gm=new THREE.CylinderGeometry(.6,.6,.14,6), m=mat(0xe8c35a,{flatShading:true});
+      fc.forEach(c=>{ const h=new THREE.Mesh(gm,m); h.position.copy(c).multiplyScalar(1.01); h.quaternion.setFromUnitVectors(Y,c.clone().normalize()); g.add(h); }); }).grow=.3;
+  addPart('ipen','Penton (12 sudut)','#7b61d1',[0,0,0],
+    'Kapsomer di 12 sudut kapsid (segi lima). Dari setiap penton keluar satu serabut.',
+    g=>{ const sg=new THREE.SphereGeometry(.3,12,8), m=mat(0x7b61d1);
+      iVerts.forEach(v=>{ const s=new THREE.Mesh(sg,m); s.position.copy(v); g.add(s); }); }).grow=.25;
+  addPart('ifib','Serabut dan knob','#9bcf53',[0,0,0],
+    'Serabut panjang dengan ujung membulat (knob) yang mengenali reseptor pada sel inang, mirip fungsi serabut ekor bakteriofag.',
+    g=>{ const m=mat(0x9bcf53), km=mat(0xd6ee9c), kg=new THREE.SphereGeometry(.15,10,8);
+      iVerts.forEach(v=>{ const n=v.clone().normalize(); g.add(limb(v,n.clone().multiplyScalar(3.3),.045,m,8));
+        const k=new THREE.Mesh(kg,km); k.position.copy(n).multiplyScalar(3.4); g.add(k); }); }).grow=.7;
+  addPart('idna','DNA untai ganda','#4cd7f6',[3,-1.4,1.8],
+    'Materi genetik virus, terlindung di dalam kapsid. Adenovirus adalah virus DNA, penyebab flu, radang tenggorokan, dan mata merah pada manusia.',
+    g=>g.add(new THREE.Mesh(new THREE.TorusKnotGeometry(.5,.12,120,10,2,3),mat(0x4cd7f6,{emissive:0x0a4a5c}))));
+
+  /* 3) BULAT BERSELUBUNG: Virus Korona */
+  newVirus('env','Berselubung','Virus Korona (SARS-CoV-2)','Virus bulat berselubung dengan paku glikoprotein');
+  addPart('elip','Selubung lipid','#f0b27a',[-3,2.6,0],
+    'Lapisan lemak yang dicuri dari membran sel inang. Selubung ini membuat virus rentan terhadap sabun dan alkohol.',
+    g=>g.add(new THREE.Mesh(new THREE.SphereGeometry(1.8,32,24),mat(0xf0b27a,{transparent:true,opacity:.5,roughness:.3,side:THREE.DoubleSide}))));
+  addPart('espk','Paku (protein S)','#e4572e',[0,0,0],
+    'Glikoprotein yang menonjol seperti mahkota (korona). Paku S menempel pada reseptor ACE2 di sel manusia, lalu membuka jalan bagi virus untuk masuk.',
+    g=>{ const m=mat(0xe4572e), hg=new THREE.SphereGeometry(.22,10,8);
+      fib(42).forEach(p=>{ g.add(limb(p.clone().multiplyScalar(1.75),p.clone().multiplyScalar(2.4),.06,m,8));
+        const h=new THREE.Mesh(hg,m); h.position.copy(p).multiplyScalar(2.6); g.add(h); }); }).grow=.6;
+  addPart('emem','Protein M dan E','#7b61d1',[0,0,0],
+    'Protein membran (M) dan selubung (E) yang tertanam di lapisan lemak. Keduanya menjaga bentuk virus dan berperan saat virus baru dirakit.',
+    g=>{ const m=mat(0x7b61d1), sg=new THREE.SphereGeometry(.1,8,6);
+      fib(80,.5).forEach(p=>{ const s=new THREE.Mesh(sg,m); s.position.copy(p).multiplyScalar(1.82); g.add(s); }); }).grow=.25;
+  addPart('erna','RNA genom (+ protein N)','#4cd7f6',[3.2,-1.6,1.6],
+    'Satu untai RNA yang sangat panjang, dibungkus protein nukleokapsid (N). RNA ini langsung dipakai sel inang sebagai cetakan untuk membuat protein virus.',
+    g=>g.add(new THREE.Mesh(new THREE.TorusKnotGeometry(.6,.16,160,10,3,4),mat(0x4cd7f6,{emissive:0x0a4a5c}))));
+
   /* ---------- UI ---------- */
   const $ = id => document.getElementById(id);
   const chipsEl = $('chips');
   let selected = null;
 
-  parts.forEach(p=>{
-    const b = document.createElement('button');
-    b.className = 'chip'; b.type = 'button'; b.setAttribute('role','listitem');
-    b.style.setProperty('--c', p.color);
-    b.innerHTML = '<i></i><span>'+p.name+'</span>';
-    b.addEventListener('click', ()=>select(p));
-    chipsEl.appendChild(b);
-    p.chip = b;
-  });
+  function buildChips(){
+    chipsEl.innerHTML = '';
+    parts.forEach(p=>{
+      const b = document.createElement('button');
+      b.className = 'chip'; b.type = 'button'; b.setAttribute('role','listitem');
+      b.style.setProperty('--c', p.color);
+      b.innerHTML = '<i></i><span>'+p.name+'</span>';
+      b.addEventListener('click', ()=>select(p));
+      chipsEl.appendChild(b);
+      p.chip = b;
+    });
+  }
+  buildChips();
 
   function refreshUI(){
     parts.forEach(p=>{
@@ -311,20 +482,22 @@
         if (!m.userData.baseEmissive) m.userData.baseEmissive = m.emissive.clone();
         m.emissive.setHex(0x5a5a1a);
       });
+      if (!p.lc){ p.group.updateWorldMatrix(true, true); box.setFromObject(p.group); box.getCenter(c); p.lc = p.group.worldToLocal(c.clone()); }
+      lastLX = -1;
       const l = $('label'); l.textContent = p.name; l.style.display = 'block';
     } else {
       $('label').style.display = 'none';
     }
-    refreshUI();
+    refreshUI(); inv();
   }
 
   $('toggle').addEventListener('click', ()=>{
     if (!selected) return;
     selected.target = selected.target ? 0 : 1;
-    refreshUI();
+    refreshUI(); inv();
   });
-  $('bExplode').addEventListener('click', ()=>{ parts.forEach(p=>p.target=1); refreshUI(); });
-  $('bAssemble').addEventListener('click', ()=>{ parts.forEach(p=>p.target=0); refreshUI(); });
+  $('bExplode').addEventListener('click', ()=>{ parts.forEach(p=>p.target=1); refreshUI(); inv(); });
+  $('bAssemble').addEventListener('click', ()=>{ parts.forEach(p=>p.target=0); refreshUI(); inv(); });
 
   let mode = 'rotate';
   $('bMode').addEventListener('click', e=>{
@@ -337,7 +510,7 @@
   function resetView(){
     phage.rotation.set(0.12, 0.5, 0);
     phage.position.set(0, 0.9, 0);
-    userScale = 1;
+    userScale = 1; inv();
   }
   $('bReset').addEventListener('click', resetView);
   resetView();
@@ -361,14 +534,14 @@
       toast('Kamera tidak tersedia. Buka lewat HTTPS atau localhost.'); return;
     }
     try {
-      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false});
+      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}, audio:false});
       video.srcObject = stream; video.style.display = 'block';
       await video.play().catch(()=>{});
       camBtn.textContent = 'Matikan kamera'; camBtn.classList.add('on');
       toast('Arahkan ke meja. Seret untuk memutar, cubit untuk memperbesar, atau pakai mode geser.');
     } catch (err){
       stream = null;
-      toast('Izin kamera ditolak atau kamera tidak ditemukan. Izinkan akses kamera di pengaturan peramban.');
+      toast(window.self !== window.top ? 'Kamera biasanya diblokir di dalam Canva. Ketuk "Buka layar penuh" untuk memakai AR.' : 'Izin kamera ditolak atau kamera tidak ditemukan. Izinkan akses kamera di pengaturan peramban.');
     }
   });
 
@@ -378,7 +551,7 @@
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 
   function pick(x, y){
-    if (tab === 'sim') return;
+    if (tab !== 'parts') return;
     ndc.set((x/innerWidth)*2-1, -(y/innerHeight)*2+1);
     ray.setFromCamera(ndc, camera);
     const meshes = [];
@@ -390,7 +563,7 @@
   const dist = () => { const a=[...ptrs.values()]; return Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y); };
 
   canvas.addEventListener('pointerdown', e=>{
-    canvas.setPointerCapture(e.pointerId);
+    canvas.setPointerCapture(e.pointerId); document.body.classList.add('drag');
     ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
     down = {t:performance.now(), moved:0};
     if (ptrs.size === 2) pinch = dist();
@@ -413,11 +586,12 @@
       if (pinch > 0) userScale = Math.max(.4, Math.min(2.6, userScale * d / pinch));
       pinch = d;
     }
+    inv();
   });
   function endPtr(e){
     if (!ptrs.has(e.pointerId)) return;
     const wasSingle = ptrs.size === 1;
-    ptrs.delete(e.pointerId);
+    ptrs.delete(e.pointerId); if (!ptrs.size) document.body.classList.remove('drag');
     if (wasSingle && down && down.moved < 8 && performance.now() - down.t < 450) pick(e.clientX, e.clientY);
     if (ptrs.size < 2) pinch = 0;
   }
@@ -426,11 +600,13 @@
   canvas.addEventListener('wheel', e=>{
     e.preventDefault();
     userScale = Math.max(.4, Math.min(2.6, userScale * (e.deltaY < 0 ? 1.07 : 0.93)));
+    inv();
   }, {passive:false});
 
-  /* ---------- Simulasi infeksi ---------- */
+  /* ---------- Simulasi infeksi (khusus bakteriofag) ---------- */
   let tab='parts', simT=0, playing=true, speed=1, dragS=false, lastDH=0, si=-1;
-  const T=34, dock=$('dock'), slider=$('sSlider'), sChips=$('sChips');
+  let T=34, cur=null, lisOn=false;
+  const dock=$('dock'), slider=$('sSlider'), sChips=$('sChips');
   const STAGES=[
     ['Mendekat',0,'Fag terbawa arus dan bertemu bakteri secara kebetulan. Fag tidak bisa berenang sendiri.'],
     ['Menempel',5,'Serabut ekor mengenali reseptor khusus pada dinding bakteri, lalu pelat dasar merapat ke permukaan.'],
@@ -443,9 +619,9 @@
   const P=id=>parts.find(p=>p.id===id);
   const pHead=P('head'),pDna=P('dna'),pCol=P('collar'),pSh=P('sheath'),pCore=P('core');
   const fibers=parts.filter(p=>p.id.startsWith('fiber'));
-  const dnaM=pDna.group.children[0];
+  const dnaM=pDna.group.children[0]; dnaM.matrixAutoUpdate=true;
 
-  const sim=new THREE.Group(); sim.visible=false; phage.add(sim);
+  const sim=new THREE.Group(); sim.visible=false;
   const cell=new THREE.Group(); cell.position.y=-1.9; sim.add(cell);
   const minisG=new THREE.Group(); minisG.position.y=-1.9; sim.add(minisG);
   const R=2.2, L=3.6, pts=[];
@@ -461,17 +637,82 @@
   const injM=new THREE.Mesh(new THREE.TubeGeometry(new Coil(u=>{const th=u*Math.PI*6.4,r=.25+.8*u; return new THREE.Vector3(r*Math.cos(th)*1.3,1.9-1.6*u+.25*Math.sin(th*1.3),r*Math.sin(th));}),200,.07,6,false),mat(0x4cd7f6,{emissive:0x0a4a5c,transparent:true}));
   cell.add(injM); const injN=injM.geometry.index.count;
 
+  /* ---------- Simulasi siklus lisogenik (3D) ---------- */
+  cur=STAGES;
+  const STG_S=[STAGES[0],STAGES[1],STAGES[2],STAGES[3],
+    ['Integrasi',17,'DNA fag menyisip ke kromosom bakteri (segmen biru muda) dan menjadi profag. Bakteri tetap hidup, kapsid kosong tertinggal di luar.'],
+    ['Pembelahan',22,'Bakteri membelah. Kromosom beserta profag ikut disalin ke kedua sel anak, sehingga fag diwariskan tanpa membunuh inang.'],
+    ['Dorman',28,'Profag tetap "tidur": protein represor menekan gen litik sehingga tidak ada fag baru yang dibuat. Sel juga kebal terhadap infeksi ulang oleh fag sejenis. Hanya jika terkena stres (mis. sinar UV), profag bisa aktif dan beralih ke siklus litik.']];
+  // profag = potongan kromosom yang berasal dari DNA fag
+  const profM=new THREE.Mesh(new THREE.TubeGeometry(new Coil(u=>{const a=(.17+.16*u)*Math.PI*2; return new THREE.Vector3(2.4*Math.cos(a),Math.sin(a*3),Math.sin(a*2+.7));}),40,.14,8,false),mat(0x4cd7f6,{emissive:0x1a8aa8}));
+  const profN=profM.geometry.index.count;
+  profM.visible=false; cell.add(profM);
+  const cellB=cell.clone(true); cellB.visible=false; sim.add(cellB);
+  const chB=cellB.children[1], profB=cellB.children[3];
+  const uvG=new THREE.Group(); uvG.visible=false; uvG.position.y=.7; sim.add(uvG);
+  [-4.2,-.5,2.2,4.4].forEach(x=>{ const c=new THREE.Mesh(new THREE.ConeGeometry(.14,.9,6),mat(0xffd34d,{emissive:0xb38600})); c.rotation.x=Math.PI; c.position.x=x; uvG.add(c); });
+  let minisGB=null, minisB=null;
+  function buildSChips(){
+    sChips.innerHTML='';
+    cur.forEach((st,i)=>{
+      const b=document.createElement('button'); b.className='chip'; b.type='button'; b.textContent=(i+1)+'. '+st[0];
+      b.addEventListener('click',()=>{simT=st[1]; si=-1; inv();}); sChips.appendChild(b);
+    });
+  }
+  function setSimMode(lis){
+    lisOn=lis; cur=lis?STG_S:STAGES; T=lis?32:34; slider.max=T*10;
+    simT=0; playing=true; si=-1; lastSl=-1; lastPlay=''; buildSChips();
+  }
+  function applyAny(t){
+    if(!lisOn){
+      cellB.visible=false; cell.position.x=0; profM.visible=false; uvG.visible=false;
+      minisG.position.x=0; minisG.scale.setScalar(1); if(minisGB) minisGB.visible=false;
+      applySim(t); return;
+    }
+    // t<17: sama dengan litik; 17..31: fag "tidur" sebagai profag; >=31: lanjut ke litik
+    applySim(Math.min(t,17));
+    if(!minisGB){ minisGB=minisG.clone(true); sim.add(minisGB); minisB=minisGB.children.map(g=>({g,head:g.children[0],dna:g.children[1],tail:g.children[2]})); }
+    const ig=E(seg(t,17,21)), dv=E(seg(t,22,28)), ex=0, fin=1;
+    const sc=1-.45*dv, cx=2.2*dv;
+    injM.material.opacity=1-ig;
+    profM.geometry.setDrawRange(0,Math.floor(ig*profN/6)*6);
+    profM.visible=profB.visible=ig>0&&fin>.01;
+    profM.position.y=profB.position.y=1.1*ex;
+    profM.scale.setScalar(Math.max(.001,fin)); profB.scale.copy(profM.scale);
+    uvG.visible=false;
+    // dua sel anak
+    cell.scale.multiplyScalar(sc); cell.position.x=-cx;
+    cellB.visible=cell.visible&&dv>0; cellB.position.set(cx,-1.9,0); cellB.scale.copy(cell.scale);
+    chB.scale.copy(chrom.scale); chB.visible=chrom.visible;
+    // kapsid kosong ikut sel anak pertama
+    model.position.x-=cx; model.position.y-=2.2*(1-sc); model.scale.multiplyScalar(1-.3*dv);
+    // fag baru dirakit di kedua sel anak
+    minisG.scale.setScalar(sc); minisG.position.x=-cx;
+    minisGB.visible=dv>0; minisGB.scale.setScalar(sc); minisGB.position.set(cx,-1.9,0);
+    for(let i=0;i<minis.length;i++){
+      const m=minis[i], b=minisB[i];
+      b.g.position.copy(m.g.position); b.g.rotation.y=m.g.rotation.y;
+      b.head.visible=m.head.visible; b.head.scale.copy(m.head.scale);
+      b.dna.visible=m.dna.visible; b.dna.scale.copy(m.dna.scale);
+      b.tail.visible=m.tail.visible; b.tail.scale.copy(m.tail.scale);
+    }
+  }
+
   const minis=[], V=THREE.Vector3;
+  const mH=mat(0xf08a8a,{transparent:true,opacity:.6,flatShading:true}), mD=mat(0x4cd7f6,{emissive:0x0a4a5c}), mT=mat(0x2bb3a3), mB=mat(0x7b61d1), mL=mat(0x9bcf53);
+  const tpl=new THREE.Group();
+  {
+    const head=new THREE.Mesh(new THREE.IcosahedronGeometry(.3,0),mH); head.position.y=.85;
+    const dna=new THREE.Mesh(new THREE.TorusKnotGeometry(.13,.035,48,8,2,3),mD); dna.position.y=.85;
+    const tail=new THREE.Group(), tl=limb(new V(0,.6,0),new V(0,-.15,0),.07,mT), ll=limb(new V(.1,-.18,0),new V(.4,-.6,0),.03,mL);
+    tail.add(tl);
+    const bs=new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,.06,6),mB); bs.position.y=-.18; tail.add(bs);
+    for(let k=0;k<3;k++){ const lg=new THREE.Group(); lg.add(new THREE.Mesh(ll.geometry,mL)); lg.children[0].position.copy(ll.position); lg.children[0].quaternion.copy(ll.quaternion); lg.rotation.y=k*2.09; tail.add(lg); }
+    tpl.add(head,dna,tail);
+  }
   [[-2.6,.1,.3],[-.8,.1,-.4],[1.2,.1,.4],[2.9,0,-.2],[-1.6,-1,-.3],[.5,-1,.3]].forEach((q,i)=>{
-    const g=new THREE.Group();
-    const head=new THREE.Mesh(new THREE.IcosahedronGeometry(.3,0),mat(0xf08a8a,{transparent:true,opacity:.6,flatShading:true})); head.position.y=.85;
-    const dna=new THREE.Mesh(new THREE.TorusKnotGeometry(.13,.035,48,8,2,3),mat(0x4cd7f6,{emissive:0x0a4a5c})); dna.position.y=.85;
-    const tail=new THREE.Group();
-    tail.add(limb(new V(0,.6,0),new V(0,-.15,0),.07,mat(0x2bb3a3)));
-    const bs=new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,.06,6),mat(0x7b61d1)); bs.position.y=-.18; tail.add(bs);
-    for(let k=0;k<3;k++){const lg=new THREE.Group(); lg.add(limb(new V(.1,-.18,0),new V(.4,-.6,0),.03,mat(0x9bcf53))); lg.rotation.y=k*2.09; tail.add(lg);}
-    g.add(head,dna,tail); g.scale.setScalar(.7); g.position.set(...q); g.rotation.z=i%2?.15:-.15;
-    minisG.add(g); minis.push({g,head,dna,tail,q:new V(...q)});
+    const g=tpl.clone(true); g.scale.setScalar(.7); g.position.set(...q); g.rotation.z=i%2?.15:-.15;
+    minisG.add(g); minis.push({g,head:g.children[0],dna:g.children[1],tail:g.children[2],q:new V(...q)});
   });
 
   function applySim(t){
@@ -501,34 +742,122 @@
     parts.forEach(p=>{p.simY=0; p.simS=1;});
     model.position.set(0,-1.05,0); model.rotation.set(0,0,0); model.scale.setScalar(1); dnaM.scale.set(1,1.2,1);
   }
-  STAGES.forEach((st,i)=>{
-    const b=document.createElement('button'); b.className='chip'; b.type='button'; b.textContent=(i+1)+'. '+st[0];
-    b.addEventListener('click',()=>{simT=st[1]; si=-1;}); sChips.appendChild(b);
-  });
+  buildSChips();
+  let lastPlay='', lastSl=-1; const sPlayEl=$('sPlay');
   function updateSimUI(){
-    let k=0; STAGES.forEach((st,i)=>{ if(simT>=st[1]) k=i; });
-    if(k!==si){ si=k; [...sChips.children].forEach((c,i)=>c.classList.toggle('sel',i===k)); $('sCap').textContent=STAGES[k][2]; }
-    if(!dragS) slider.value=simT*10;
-    $('sPlay').textContent = playing ? 'Jeda' : (simT>=T ? 'Ulangi' : 'Putar');
+    let k=0; cur.forEach((st,i)=>{ if(simT>=st[1]) k=i; });
+    if(k!==si){ si=k; [...sChips.children].forEach((c,i)=>c.classList.toggle('sel',i===k)); $('sCap').textContent=cur[k][2]; }
+    if(!dragS){ const v=Math.round(simT*10); if(v!==lastSl){ lastSl=v; slider.value=v; } }
+    const pt = playing ? 'Jeda' : (simT>=T ? 'Ulangi' : 'Putar');
+    if(pt!==lastPlay){ lastPlay=pt; sPlayEl.textContent=pt; }
   }
+  /* ---------- Infografis 2D: siklus litik dan lisogenik ---------- */
+  const cycEl=$('cyc'), cCap=$('cCap'); let cyMode='litik', cyStep=-1;
+  const bac=(x,y,o={})=>`<g transform="translate(${x},${y}) scale(${o.s||1})"><rect x="-34" y="-15" width="68" height="30" rx="15" fill="#d7ecf8" stroke="#58a6d6" stroke-width="2"${o.dash?' stroke-dasharray="4 3"':''}/>${o.chr===false?'':'<path d="M-22 0q5-9 11 0t11 0t11 0t11 0" fill="none" stroke="#ffb347" stroke-width="2"/>'}${o.in||''}</g>`;
+  const pha=(x,y,s,r)=>`<g transform="translate(${x},${y}) rotate(${r||0}) scale(${s||1})"><polygon points="-6,-15 0,-19 6,-15 6,-8 0,-4 -6,-8" fill="#f08a8a" stroke="#c25a5a"/><rect x="-1.8" y="-4" width="3.6" height="12" fill="#2bb3a3"/><path d="M-6 13L0 8L6 13M-7 8H7" stroke="#7b61d1" fill="none" stroke-width="1.5"/></g>`;
+  const dnaP=`<path d="M-10 -1q4-7 8 0t8 0t8 0" fill="none" stroke="#4cd7f6" stroke-width="2.6"/>`;
+  const dot=(x,y)=>`<circle cx="${x}" cy="${y}" r="2.6" fill="#4cd7f6"/>`;
+  const ICON={
+    attach:()=>bac(0,12)+pha(0,-14,1.1),
+    inject:()=>bac(0,12,{in:dnaP})+pha(0,-14,1.1),
+    synth:()=>bac(0,4,{chr:false,in:'<path d="M-24 0h6M-12 3h5M2 -2h6" stroke="#ffb347" stroke-width="2"/>'+dot(-22,-6)+dot(-8,-7)+dot(8,6)+dot(20,-4)+dot(26,5)}),
+    assem:()=>bac(0,4,{chr:false,in:pha(-18,2,.5)+pha(0,2,.5)+pha(18,2,.5)}),
+    lysis:()=>bac(0,16,{dash:1,chr:false})+pha(-34,-10,.6,-25)+pha(0,-18,.6)+pha(34,-10,.6,25)+'<path d="M-12 2l-5 -6M0 0v-6M12 2l5 -6" stroke="#e4572e" stroke-width="2"/>',
+    integ:()=>bac(0,4,{chr:false,in:'<circle r="9" fill="none" stroke="#ffb347" stroke-width="2"/><path d="M0 -9A9 9 0 0 1 8 -4" fill="none" stroke="#4cd7f6" stroke-width="4"/>'}),
+    divide:()=>bac(-21,4,{s:.6,in:'<circle r="3.5" fill="#4cd7f6"/>'})+bac(21,4,{s:.6,in:'<circle r="3.5" fill="#4cd7f6"/>'})+'<path d="M-4 4h8" stroke="#12202b" stroke-width="1.5"/>',
+    induce:()=>bac(0,12,{chr:false,in:'<circle r="8" fill="none" stroke="#ffb347" stroke-width="2" stroke-dasharray="3 2"/><circle cx="14" cy="-6" r="4" fill="#4cd7f6"/>'})+'<path d="M10 -32l-8 12h6l-4 12 12-16h-7l5-8z" fill="#ffd34d" stroke="#d9a300"/>'
+  };
+  const ST_A=['Penempelan','attach','Serabut ekor mengenali reseptor pada dinding bakteri, lalu fag menempel.'];
+  const ST_B=['Penetrasi','inject','Selubung ekor mengerut, tabung inti menembus dinding sel, dan DNA fag disuntikkan ke dalam bakteri.'];
+  const CY={
+    litik:{t:['SIKLUS','LITIK'],s:['Fag memperbanyak diri','dan membunuh inang'],loop:true,st:[ST_A,ST_B,
+      ['Biosintesis','synth','DNA bakteri dirusak. Mesin sel dipaksa menyalin DNA fag dan membuat protein kepala dan ekor.'],
+      ['Perakitan','assem','Kepala, ekor, dan DNA dirakit menjadi puluhan fag baru di dalam sel.'],
+      ['Lisis','lysis','Lisozim melubangi dinding sel hingga bakteri pecah. Fag baru keluar dan mencari bakteri lain.']]},
+    lis:{t:['SIKLUS','LISOGENIK'],s:['DNA fag diwariskan','tanpa membunuh inang','Opsional: induksi → litik'],loop:false,st:[ST_A,ST_B,
+      ['Integrasi','integ','DNA fag menyisip ke kromosom bakteri dan menjadi profag. Gen pemicu litik ditekan, jadi fag "tidur".'],
+      ['Pembelahan','divide','Setiap kali bakteri membelah, profag ikut tersalin ke sel anak. Proses ini berulang dari generasi ke generasi.'],
+      ['Induksi','induce','Opsional. Siklus lisogenik sendiri tidak memperbanyak fag. Hanya jika terkena stres (mis. sinar UV), profag keluar dari kromosom (eksisi) dan beralih ke siklus litik.']]}
+  };
+  const CMP=`<div class="cmp"><table><tr><th></th><th>Litik</th><th>Lisogenik</th></tr>
+<tr><td>DNA fag</td><td>Langsung bereplikasi</td><td>Menyisip ke kromosom (profag)</td></tr>
+<tr><td>Nasib bakteri</td><td>Pecah (lisis)</td><td>Tetap hidup dan membelah</td></tr>
+<tr><td>Fag baru</td><td>Dibuat segera</td><td>Dibuat setelah induksi</td></tr>
+<tr><td>Jenis fag</td><td>Virulen</td><td>Temperat</td></tr>
+<tr><td>Contoh</td><td>Fag T4</td><td>Fag lambda</td></tr></table></div>`;
+  function drawCyc(){
+    if(cyMode==='cmp'){ cycEl.innerHTML=CMP; cCap.textContent='Perbedaan utama kedua siklus hidup bakteriofag.'; return; }
+    const d=CY[cyMode], n=d.st.length, R=135, C=200, ang=i=>-90+i*72;
+    const pt=a=>[C+R*Math.cos(a*Math.PI/180), C+R*Math.sin(a*Math.PI/180)];
+    let h='<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet"><defs><marker id="ah" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#9fc3e0"/></marker></defs>';
+    for(let i=0;i<(d.loop?n:n-1);i++){
+      const [x0,y0]=pt(ang(i)+28), [x1,y1]=pt(ang(i)+44);
+      h+=`<path d="M${x0} ${y0}A${R} ${R} 0 0 1 ${x1} ${y1}" fill="none" stroke="#9fc3e0" stroke-width="3" marker-end="url(#ah)"/>`;
+    }
+    d.st.forEach((st,i)=>{
+      const [x,y]=pt(ang(i)), sel=i===cyStep;
+      h+=`<g class="cn" data-i="${i}" transform="translate(${x},${y})" style="cursor:pointer"><rect x="-56" y="-46" width="112" height="92" rx="14" fill="#fff" stroke="${sel?'#e4572e':'#cbd7df'}" stroke-width="${sel?4:2}"/><g transform="translate(0,-8) scale(.78)">${ICON[st[1]]()}</g><circle cx="-47" cy="-37" r="11" fill="#12202b"/><text x="-47" y="-33" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">${i+1}</text><text x="0" y="36" text-anchor="middle" font-size="13" font-weight="700" fill="#12202b">${st[0]}</text></g>`;
+    });
+    d.t.forEach((t,i)=>h+=`<text x="200" y="${178+i*22}" text-anchor="middle" font-size="19" font-weight="700" fill="#fff" font-family="Georgia,serif">${t}</text>`);
+    d.s.forEach((t,i)=>h+=`<text x="200" y="${232+i*15}" text-anchor="middle" font-size="11" fill="#d6e2ee">${t}</text>`);
+    cycEl.innerHTML=h+'</svg>';
+    cCap.textContent = cyStep<0 ? 'Ketuk salah satu langkah untuk melihat penjelasannya.' : (cyStep+1)+'. '+d.st[cyStep][0]+': '+d.st[cyStep][2];
+  }
+  const is3=()=>tab==='sim' || tab==='lsim';
+  function layout(){
+    const th=is3();
+    $('paneParts').hidden=tab!=='parts'; $('paneCyc').hidden=tab!=='cyc'; $('paneSim').hidden=!th;
+    cycEl.hidden=tab!=='cyc'; phage.visible=tab!=='cyc';
+    sim.visible=th; if(th) phage.add(sim); else phage.remove(sim);
+  }
+  function showCyc(m){
+    cyMode=m; cyStep=-1;
+    document.querySelectorAll('#cRow [data-m]').forEach(b=>b.classList.toggle('active',b.dataset.m===m));
+    layout(); resetView(); inv();
+    clearSim(); drawCyc();
+  }
+  document.querySelectorAll('#cRow [data-m]').forEach(b=>b.addEventListener('click',()=>showCyc(b.dataset.m)));
+  cycEl.addEventListener('click',e=>{ const g=e.target.closest('.cn'); if(g){ cyStep=+g.dataset.i; drawCyc(); } });
+
   function setTab(n){
     tab=n;
     document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===n));
-    $('paneParts').hidden=n!=='parts'; $('paneSim').hidden=n!=='sim';
-    parts.forEach(p=>{p.target=0; p.amt=0;}); select(null);
-    sim.visible=n==='sim'; si=-1; resetView();
-    if(n==='sim'){ simT=0; playing=true; phage.position.y=.3; } else clearSim();
+    parts.forEach(p=>{p.target=0; p.amt=0; p.stale=true;}); select(null);
+    if(n==='cyc'){ showCyc(cyMode); return; }
+    layout(); si=-1; resetView(); inv();
+    if(n==='sim'||n==='lsim'){ setSimMode(n==='lsim'); phage.position.y=.3; } else clearSim();
   }
   document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
   $('bMin').addEventListener('click',e=>{ dock.classList.toggle('min'); e.currentTarget.textContent=dock.classList.contains('min')?'▴':'▾'; });
   $('iDesc').addEventListener('click',e=>e.currentTarget.classList.toggle('open'));
-  $('sPlay').addEventListener('click',()=>{ if(simT>=T){simT=0; playing=true;} else playing=!playing; });
-  $('sRe').addEventListener('click',()=>{ simT=0; playing=true; });
+  $('sPlay').addEventListener('click',()=>{ if(simT>=T){simT=0; playing=true;} else playing=!playing; inv(); });
+  $('sRe').addEventListener('click',()=>{ simT=0; playing=true; inv(); });
   $('sSpd').addEventListener('click',e=>{ speed=speed===1?2:speed===2?.5:1; e.currentTarget.textContent=speed+'×'; });
   slider.addEventListener('pointerdown',()=>dragS=true);
   ['pointerup','pointercancel','change'].forEach(ev=>slider.addEventListener(ev,()=>dragS=false));
-  slider.addEventListener('input',()=>{ simT=slider.value/10; });
-  function fitView(){ camera.setViewOffset(innerWidth,innerHeight,0,(lastDH-56)/2,innerWidth,innerHeight); }
+  slider.addEventListener('input',()=>{ simT=slider.value/10; inv(); });
+  function fitView(){ camera.setViewOffset(innerWidth,innerHeight,0,(lastDH-56)/2,innerWidth,innerHeight); inv(); }
+
+  /* ---------- Pemilih virus ---------- */
+  const vsel = $('vsel'); let vkey = 'phage';
+  function setVirus(k){
+    if (tab !== 'parts') setTab('parts');
+    parts.forEach(p=>{p.target=0; p.amt=0; p.stale=true;}); select(null);
+    vkey = k; parts.length = 0; parts.push(...VIR[k].parts);
+    Object.keys(VIR).forEach(x=>{ const m=VIR[x].model; m.visible = x===k; if(x===k) phage.add(m); else phage.remove(m); });
+    document.querySelectorAll('[data-tab="sim"],[data-tab="lsim"],[data-tab="cyc"]').forEach(b=>b.style.display = k==='phage' ? '' : 'none');
+    $('vTitle').textContent = VIR[k].name;
+    document.querySelector('header p').textContent = VIR[k].sub;
+    [...vsel.children].forEach(b=>b.classList.toggle('active', b.dataset.k===k));
+    buildChips(); resetView(); refreshUI(); inv();
+  }
+  Object.keys(VIR).forEach(k=>{
+    const b = document.createElement('button'); b.className='tool'; b.type='button';
+    b.dataset.k = k; b.textContent = VIR[k].tab; b.addEventListener('click', ()=>setVirus(k)); vsel.appendChild(b);
+  });
+  setVirus('phage');
+
+  if (window.self !== window.top){ const o=$('openBtn'); o.hidden=false; o.href=location.href; }
 
   /* ---------- Render ---------- */
   function resize(){
@@ -537,39 +866,54 @@
     camera.aspect = w / h; fitView();
     baseScale = Math.max(.6, Math.min(1.15, camera.aspect * 1.35));
   }
-  addEventListener('resize', resize); resize();
+  addEventListener('resize', ()=>{ needResize = true; inv(); }); resize();
+  addEventListener('pageshow', inv);
+  document.addEventListener('visibilitychange', ()=>{ if (!document.hidden) inv(); });
+  function onDock(){ const dh = dock.offsetHeight; if (dh !== lastDH){ lastDH = dh; cycEl.style.bottom = dh + 'px'; fitView(); } }
+  if (window.ResizeObserver) new ResizeObserver(onDock).observe(dock); else addEventListener('resize', onDock);
+  onDock();
 
-  const clock = new THREE.Clock();
   const box = new THREE.Box3(), c = new THREE.Vector3();
   const labelEl = $('label');
 
   function frame(){
-    const dt = Math.min(clock.getDelta(), .05);
-    if (tab === 'sim'){
-      if (playing && !dragS){ simT = Math.min(T, simT + dt * speed); if (simT >= T) playing = false; }
-      applySim(simT); updateSimUI();
+    running = false;
+    if (needResize){ needResize = false; resize(); }
+    if (tab === 'cyc') return;
+    const now = performance.now(), dt = Math.min((now - lastT) / 1000, .05); lastT = now;
+    let anim = false;
+    const simOn = is3();
+    if (simOn){
+      if (playing && !dragS){ simT = Math.min(T, simT + dt * speed); if (simT >= T) playing = false; else anim = true; }
+      applyAny(simT); updateSimUI();
     }
-    const dh = dock.offsetHeight; if (dh !== lastDH){ lastDH = dh; fitView(); }
-    parts.forEach(p=>{
-      p.amt += (p.target - p.amt) * Math.min(1, dt * 6);
-      p.group.position.copy(p.dir).multiplyScalar(p.amt);
-      p.group.position.y += p.simY || 0; p.group.scale.y = p.simS || 1;
-    });
-    const s = baseScale * userScale * (tab === 'sim' ? .8 : 1);
-    phage.scale.setScalar(s);
-
-    if (selected){
-      box.setFromObject(selected.group); box.getCenter(c);
-      c.project(camera);
-      labelEl.style.left = ((c.x * .5 + .5) * innerWidth) + 'px';
-      labelEl.style.top = ((-c.y * .5 + .5) * innerHeight) + 'px';
+    for (const p of parts){
+      const moving = p.amt !== p.target;
+      if (moving){
+        p.amt += (p.target - p.amt) * Math.min(1, dt * 6);
+        if (Math.abs(p.target - p.amt) < .002) p.amt = p.target; else anim = true;
+      }
+      if (moving || simOn || p.stale){
+        p.stale = false;
+        p.group.position.copy(p.dir).multiplyScalar(p.amt);
+        p.group.position.y += p.simY || 0;
+        const gs = p.grow ? 1 + p.grow * p.amt : 1;
+        p.group.scale.set(gs, gs * (p.simS || 1), gs);
+      }
     }
+    phage.scale.setScalar(baseScale * userScale * (simOn ? .8 : 1));
     renderer.render(scene, camera);
-    requestAnimationFrame(frame);
+    if (selected && selected.lc){
+      c.copy(selected.lc); selected.group.localToWorld(c); c.project(camera);
+      const x = Math.round((c.x * .5 + .5) * innerWidth), y = Math.round((-c.y * .5 + .5) * innerHeight);
+      if (x !== lastLX || y !== lastLY){ lastLX = x; lastLY = y; labelEl.style.left = x + 'px'; labelEl.style.top = y + 'px'; }
+    }
+    if (anim){ running = true; requestAnimationFrame(frame); }
   }
   refreshUI();
-  frame();
+  inv();
 })();
 </script>
 </body>
 </html>
+
