@@ -374,7 +374,7 @@
    ['Kapsid heliks (tengah)','#5fbf9f',0x5fbf9f,[3.4,0,0]],
    ['Kapsid heliks (bawah)','#8d7be0',0x8d7be0,[0,-2.6,0]]].forEach((s,k)=>{
     addPart('hc'+k, s[0], s[1], s[3],
-      'Ratusan subunit protein selubung (kapsomer) tersusun berpilin membentuk tabung berongga. Pada virus heliks, bentuk kapsid mengikuti lilitan genomnya, jadi virus tampak seperti batang.',
+      'Ratusan subunit protein selubung (kapsomer) tersusun terlilit/melilit membentuk tabung berongga sehingga pada virus heliks, bentuk kapsid mengikuti lilitan genomnya, jadi virus tampak seperti batang.',
       g=>{ const m=mat(s[2],{flatShading:true});
         for(let i=k*HN/3;i<(k+1)*HN/3;i++){ const a=i*Math.PI/8, c=new THREE.Mesh(hb,m);
           c.position.set(.95*Math.cos(a),-3+6*i/HN,.95*Math.sin(a)); c.rotation.y=-a; g.add(c); } });
